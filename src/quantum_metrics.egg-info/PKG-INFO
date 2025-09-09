@@ -1,3 +1,19 @@
+Metadata-Version: 2.4
+Name: quantum-metrics
+Version: 0.1.0
+Summary: Librería para métricas cuánticas de distancia
+Author-email: Areli Yesareth Guerrero Estrada <ayge.1904@gmail.com>
+License: MIT
+Project-URL: Homepage, https://github.com/yessichibii/quantum_metrics
+Project-URL: Bug Tracker, https://github.com/yessichibii/quantum-metrics/issues
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: numpy
+Requires-Dist: scipy
+Requires-Dist: pennylane
+Dynamic: license-file
+
 # Quantum Metrics
 
 **Quantum Metrics** es una librería en Python para calcular métricas cuánticas de distancia  utilizando QRAM con PennyLane, se puede emplear un esquema hibrido obteniendo el resultado de la distancia o agregarlo como una subrutina.

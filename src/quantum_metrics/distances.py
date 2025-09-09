@@ -1,5 +1,6 @@
 import pennylane as qml
 import numpy as np
+from scipy.linalg import sqrtm
 
 def trace_distance(rho, sigma):
     """Calcula la distancia traza entre dos matrices densidad."""
@@ -9,29 +10,35 @@ def trace_distance(rho, sigma):
 
 def fidelity(rho, sigma):
     """Calcula la fidelidad cuántica entre dos matrices densidad."""
-    sqrt_rho = scipy.linalg.sqrtm(rho)
+    sqrt_rho = sqrtm(rho)
     inner = sqrt_rho @ sigma @ sqrt_rho
-    return np.real(np.trace(scipy.linalg.sqrtm(inner)) ** 2)
+    return np.real(np.trace(sqrtm(inner)) ** 2)
 
 
-def amplitude_distance(train, test):
-    state_vector, gray, qubits_qram, qubits_dato = init_qram(train)
-
+def amplitude_distance(train, test, tipo="biclase", labels=None):
+    state_vector, gray, qubits_qram, _ = init_qram(train)
     qml.AmplitudeEmbedding(state_vector, wires=range(qubits_qram), normalize=True)
-    init_data(gray,qubits_qram,dataset)
-    distance(qubits_qram,test)
+    init_data(gray, qubits_qram, train, tipo, labels)
+    distance(qubits_qram, test)
     
 
-def h_amplitude_distance(train, test):
+def h_amplitude_distance(train, test, tipo="biclase", labels=None):
     state_vector, gray, qubits_qram, qubits_dato = init_qram(train)
     n_totales = qubits_qram + qubits_dato
 
+    if labels is not None:
+        if tipo == "biclase":
+            n_totales += 1
+        elif tipo == "multiclase":
+            n_totales += len(labels[0])
+    
+    
     dev = qml.device("default.qubit", wires=n_totales)
 
     @qml.qnode(dev)
     def circuit():
         qml.AmplitudeEmbedding(state_vector, wires=range(qubits_qram), normalize=True)
-        init_data(gray,qubits_qram,dataset)
+        init_data(gray, qubits_qram, train, tipo, labels)
         distance(qubits_qram,test)
         return qml.state()
 
@@ -66,26 +73,46 @@ def init_qram(dataset):
     state_vector = state_vector / np.linalg.norm(state_vector)
     return state_vector, gray, qubits_qram, qubits_dato
 
-def init_data(gray,qubits_qram,dataset):
+def init_data(gray, qubits_qram, dataset, tipo, labels):
     for i, datos in enumerate(dataset):
         addr = [int(b) for b in gray[i]]
+        controls = []
+        
+        # Control en 0 → flip antes y después
+        for k, a in enumerate(addr):
+            if a == 1:
+                controls.append(k)
+            else:
+                qml.PauliX(wires=k)
+                controls.append(k)
+        
+
         for j, val in enumerate(datos):
             # Escalamos valor [0,1] a ángulo [0,π]
             theta = val * np.pi
-            controls = []
-            for k, a in enumerate(addr):
-                if a == 1:
-                    controls.append(k)
-                else:
-                    # Control en 0 → flip antes y después
-                    qml.PauliX(wires=k)
-                    controls.append(k)
-
             qml.ctrl(qml.RY, control=controls)(theta, wires=qubits_qram + j)
 
-            for k, a in enumerate(addr):
-                if a == 0:
-                    qml.PauliX(wires=k)
+        if labels is not None:
+            if tipo == "biclase":
+                # Un qubit de clase por patrón
+                label = labels[i]  # 0 o 1
+                wire_clase = qubits_qram + len(datos)  # siguiente qubit después de los datos
+                if label == 1:
+                    qml.ctrl(qml.RY, control=controls)(np.pi, wires=wire_clase) # |1> si label=1
+            elif tipo == "multiclase":
+                # Cada elemento del label corresponde a un qubit
+                label_vector = labels[i]  # arreglo de 0 y 1
+                start_wire = qubits_qram + len(datos)
+                for j, val in enumerate(label_vector):
+                    wire_clase = start_wire + j
+                    if val == 1:
+                        qml.ctrl(qml.RY, control=controls)(np.pi, wires=wire_clase) # |1> si label=1
+
+
+        # Control en 0 → flip antes y después
+        for k, a in enumerate(addr):
+            if a == 0:
+                qml.PauliX(wires=k)
 
 def distance(qubits_qram,test):
     for j, val in enumerate(test):
@@ -94,19 +121,3 @@ def distance(qubits_qram,test):
         # Aplicamos RY inverso en los qubits de dato
         qml.RY(theta, wires=qubits_qram + j)
 
-
-
-# Probamos
-
-# Ejemplo: dataset con 4 patrones de 2 características cada uno
-dataset = np.array([
-    [1, 0],
-    [0, 1],
-    [1, 1],
-    [0.5, 0.5]
-], requires_grad=False)
-test = [0.5,0.5]
-
-
-state = penny_amplitude_distance(dataset,test)
-print("Estado QRAM:\n", state)
