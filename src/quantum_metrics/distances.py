@@ -99,7 +99,7 @@ def init_data(gray, qubits_qram, dataset, tipo, labels):
                 wire_clase = qubits_qram + len(datos)  # siguiente qubit después de los datos
                 if label == 1:
                     qml.ctrl(qml.RY, control=controls)(np.pi, wires=wire_clase) # |1> si label=1
-            elif tipo == "multiclase":
+            elif tipo == "multilabel":
                 # Cada elemento del label corresponde a un qubit
                 label_vector = labels[i]  # arreglo de 0 y 1
                 start_wire = qubits_qram + len(datos)
