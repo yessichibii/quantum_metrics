@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from quantum_metrics import trace_distance, fidelity
+from qdistancia import trace_distance, fidelity, h_amplitude_distance
 
 def test_trace_distance_identical_states():
     rho = np.array([[1, 0], [0, 0]], dtype=complex)  # |0>
@@ -23,3 +23,35 @@ def test_fidelity_orthogonal_states():
     sigma = np.array([[0, 0], [0, 1]], dtype=complex)  # |1>
     # Fidelidad mínima entre estados ortogonales = 0
     assert fidelity(rho, sigma) == pytest.approx(0.0)
+
+def test_h_amplitude_distance_output_type():
+    # Dataset simple: 2 muestras, 1 característica
+    dataset = np.array([[0.0], [1.0]])
+    test = [0.5]
+
+    state = h_amplitude_distance(dataset, test)
+
+    # El resultado debe ser un array de numpy de tipo complejo
+    assert isinstance(state, np.ndarray)
+    assert np.iscomplexobj(state)
+
+def test_h_amplitude_distance_normalization():
+    dataset = np.array([[0.0], [1.0]])
+    test = [0.5]
+
+    state = h_amplitude_distance(dataset, test)
+
+    # El estado cuántico debe estar normalizado: ||state||^2 = 1
+    norm = np.sum(np.abs(state) ** 2)
+    assert norm == pytest.approx(1.0)
+
+def test_h_amplitude_distance_consistency():
+    dataset = np.array([[0.0], [1.0]])
+    test1 = [0.0]
+    test2 = [1.0]
+
+    state1 = h_amplitude_distance(dataset, test1)
+    state2 = h_amplitude_distance(dataset, test2)
+
+    # Los estados deberían ser distintos para test diferentes
+    assert not np.allclose(state1, state2)

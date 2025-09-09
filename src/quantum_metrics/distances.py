@@ -1,20 +1,20 @@
 import pennylane as qml
-from pennylane import numpy as np
+import numpy as np
 
-# def trace_distance(rho, sigma):
-#     """Calcula la distancia traza entre dos matrices densidad."""
-#     diff = rho - sigma
-#     eigvals = np.linalg.eigvals(diff @ diff.conj().T)
-#     return 0.5 * np.sum(np.sqrt(np.abs(eigvals)))
+def trace_distance(rho, sigma):
+    """Calcula la distancia traza entre dos matrices densidad."""
+    diff = rho - sigma
+    eigvals = np.linalg.eigvals(diff @ diff.conj().T)
+    return 0.5 * np.sum(np.sqrt(np.abs(eigvals)))
 
-# def fidelity(rho, sigma):
-#     """Calcula la fidelidad cuántica entre dos matrices densidad."""
-#     sqrt_rho = scipy.linalg.sqrtm(rho)
-#     inner = sqrt_rho @ sigma @ sqrt_rho
-#     return np.real(np.trace(scipy.linalg.sqrtm(inner)) ** 2)
+def fidelity(rho, sigma):
+    """Calcula la fidelidad cuántica entre dos matrices densidad."""
+    sqrt_rho = scipy.linalg.sqrtm(rho)
+    inner = sqrt_rho @ sigma @ sqrt_rho
+    return np.real(np.trace(scipy.linalg.sqrtm(inner)) ** 2)
 
 
-def penny_amplitude_distance(train, test):
+def amplitude_distance(train, test):
     state_vector, gray, qubits_qram, qubits_dato = init_qram(train)
 
     qml.AmplitudeEmbedding(state_vector, wires=range(qubits_qram), normalize=True)
@@ -22,7 +22,7 @@ def penny_amplitude_distance(train, test):
     distance(qubits_qram,test)
     
 
-def m_penny_amplitude_distance(train, test):
+def h_amplitude_distance(train, test):
     state_vector, gray, qubits_qram, qubits_dato = init_qram(train)
     n_totales = qubits_qram + qubits_dato
 
