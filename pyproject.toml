@@ -7,12 +7,13 @@ name = "quantum-metrics"
 version = "0.1.0"
 description = "Librería para métricas cuánticas de distancia"
 authors = [
-    { name="Tu Nombre", email="tu.correo@example.com" }
+    { name="Areli Yesareth Guerrero Estrada", email="ayge.1904@gmail.com" }
 ]
 license = { text="MIT" }
 readme = "README.md"
 requires-python = ">=3.8"
-dependencies = ["numpy", "scipy"]
+dependencies = ["numpy", "scipy", "pennylane"]
 
 [project.urls]
-Homepage = "https://github.com/tuusuario/quantum-metrics"
+Homepage = "https://github.com/yessichibii/quantum_metrics"
+"Bug Tracker" = "https://github.com/yessichibii/quantum-metrics/issues"
