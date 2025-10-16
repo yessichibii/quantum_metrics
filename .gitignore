@@ -1,0 +1,3 @@
+git rm -r --cached src/quantum_metrics.egg-info
+git add .
+git commit -m "Ignorar archivos egg-info generados automáticamente"
