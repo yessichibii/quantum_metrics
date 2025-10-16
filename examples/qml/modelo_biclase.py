@@ -11,7 +11,6 @@ test = [0.0]
 # print("Estado cuántico:", state)
 # print("Norma:", np.sum(np.abs(state) ** 2))
 
-
 m, qubits_dato = x_train.shape
 qubits_qram= int(np.ceil(np.log2(m)))
 n_totales = qubits_qram + qubits_dato
