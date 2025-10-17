@@ -1,34 +1,34 @@
+from .qml import (
+    biclase,
+    asociativo,
+    multilabel
+)
 from .distances import (
-    trace_distance,
-    fidelity,
-    amplitude_distance,
-    amplitude_distance2,
-    h_amplitude_distance,
-    init_qram,
-    init_qram_mod,
-    init_data,
-    init_data2,
-    init_data_noise,
-    init_data2_noise,
-    init_data_mod,
-    init_data_mod_noise,
     distance,
-    distance_noise,
+    mba_distance,
+    state_mba_distance
+)
+from .initialize import (
+    qram_initialize,
+    encode_data
+)
+from .utils import (
+    gray_code,
+    gray_code_inverso,
+    binario_code,
+    binario_code_inverso
 )
 __all__ = [
-    "trace_distance",
-    "fidelity",
-    "amplitude_distance",
-    "amplitude_distance2",
-    "h_amplitude_distance",
-    "init_qram",
-    "init_qram_mod",
-    "init_data",
-    "init_data2",
-    "init_data_noise",
-    "init_data2_noise",
-    "init_data_mod",
-    "init_data_mod_noise"
+    "gray_code",
+    "gray_code_inverso",
+    "binario_code",
+    "binario_code_inverso",
+    "qram_initialize",
+    "encode_data",
     "distance",
-    "distance_noise",
+    "mba_distance",
+    "state_mba_distance",
+    "biclase",
+    "asociativo",
+    "multilabel"
 ]

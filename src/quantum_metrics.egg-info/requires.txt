@@ -1,3 +1,5 @@
 numpy
 scipy
 pennylane
+qiskit
+qiskit_aer

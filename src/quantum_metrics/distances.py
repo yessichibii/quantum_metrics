@@ -1,321 +1,162 @@
 import pennylane as qml
+from qiskit_aer.noise import NoiseModel
 import numpy as np
-from scipy.linalg import sqrtm
+from .initialize import qram_initialize, encode_data
 
-def trace_distance(rho, sigma):
-    """Calcula la distancia traza entre dos matrices densidad."""
-    diff = rho - sigma
-    eigvals = np.linalg.eigvals(diff @ diff.conj().T)
-    return 0.5 * np.sum(np.sqrt(np.abs(eigvals)))
+def state_mba_distance(train, test, tipo="biclase", labels=None, codigo="gray", noise = 0.0, backend = None, result = "probs", shots = 1024):
+    """
+    Ejecuta un circuito QRAM completo y retorna el estado final del sistema.
 
-def fidelity(rho, sigma):
-    """Calcula la fidelidad cuántica entre dos matrices densidad."""
-    sqrt_rho = sqrtm(rho)
-    inner = sqrt_rho @ sigma @ sqrt_rho
-    return np.real(np.trace(sqrtm(inner)) ** 2)
+    Parámetros
+    ----------
+    train : array-like
+        Conjunto de datos de entrenamiento, cada fila representa un patrón.
+    test : array-like
+        Vector de prueba para calcular la distancia.
+    tipo : str, opcional default biclase
+        Tipo de problema:
+        - "biclase" : problema con solo dos clases (una etiqueta por patrón).
+        - "multiclase" : problema con n clases (una etiqueta por patrón).
+        - "multilabel" : problema con múltiples etiquetas binarias por patrón.
+    labels : list, int o None, opcional
+        Etiquetas asociadas a los datos de entrenamiento. Puede ser None si no se usan.
+        En caso de biclase y multiclase retorna int
+    codigo : str, opcional default gray
+        Tipo de codificación para las direcciones en el QRAM:
+        - "binario" : direcciones codificadas en binario
+        - "gray" : drecciones codificadoas en codigo gray.
+        - "diag" : solo las diagonales.
+    noise : float, opcional
+        Nivel de ruido para aplicar canales de depolarización. Por defecto 0.0.
+    backend : backend o None, opcional
+        Backend de Qiskit para simular el circuito con ruido. Si es None, se usa simulación ideal.
+    result : str, default probs
+        Tipo de respuesta a retornar: probs, state
+    shots : int, opcional
+        Numero de ejecuaciones, por defecto 1024, solo si se usa backend con ruido.
 
+    Retorno
+    -------
+    np.ndarray
+        - Probabilidades de medida de las etiquetas si result es "probs"
+        - Vector de estado final del sistema cuántico después de aplicar la codificación
+        y el cálculo de distancia.
 
-def amplitude_distance(train, test, tipo="biclase", labels=None):
-    state_vector, gray, qubits_qram, _ = init_qram(train)
-    qml.AmplitudeEmbedding(state_vector, wires=range(qubits_qram), normalize=True)
-    init_data(gray, qubits_qram, train, tipo, labels)
-    distance(qubits_qram, test)
+    Descripción
+    -----------
+    1. Inicializa el QRAM y calcula el número total de qubits necesarios
+       (qubits de dirección + qubits de datos + qubits de etiquetas, si existen).
+    2. Crea un dispositivo cuántico simulado (`default.qubit`) con el número total de qubits.
+    3. Define un QNode que:
+       - Aplica codificación de amplitud de los datos de entrenamiento.
+       - Inserta los datos y etiquetas en el circuito (`encode_data`), con posible ruido.
+       - Calcula la distancia con el patrón de prueba (`distance`).
+       - Retorna el estado final del sistema.
+    4. Ejecuta el QNode y retorna el vector de estado resultante.
+    """
+    state_vector, direcciones, qubits_qram, qubits_data = qram_initialize(train, codigo=codigo)
+    n_total = qubits_qram + qubits_data
     
-
-def amplitude_distance2(train, test, tipo="biclase", labels=None):
-    state_vector, gray, qubits_qram, _ = init_qram(train)
-    qml.AmplitudeEmbedding(state_vector, wires=range(qubits_qram), normalize=True)
-    init_data2(gray, qubits_qram, train, tipo, labels)
-    distance(qubits_qram, test)
-
-def h_amplitude_distance(train, test, tipo="biclase", labels=None):
-    state_vector, gray, qubits_qram, qubits_dato = init_qram(train)
-    n_totales = qubits_qram + qubits_dato
-
     if labels is not None:
-        if tipo == "biclase":
-            n_totales += 1
-        elif tipo == "multilabel":
-            n_totales += len(labels[0])
-    
-    
-    dev = qml.device("default.qubit", wires=n_totales)
+        match tipo:
+            case "multiclase":
+                n_total += int(np.ceil(np.log2(max(labels))))
+            case "multilabel":
+                n_total += len(labels[0])
+            case _:
+                n_total += 1
+            
+    if backend is not None:
+        backend = backend
+        noise_model = NoiseModel.from_backend(backend)
+        # Dispositivo PennyLane usando Qiskit Aer con ruido
+        dev = qml.device(
+            "qiskit.aer",
+            wires=n_total,
+            backend="qasm_simulator",
+            noise_model=noise_model,
+            shots=shots  # usar shots para evitar matrices de densidad enormes
+        )
+    else:
+        dev = qml.device("default.qubit", wires=n_total)
 
     @qml.qnode(dev)
     def circuit():
         qml.AmplitudeEmbedding(state_vector, wires=range(qubits_qram), normalize=True)
-        init_data(gray, qubits_qram, train, tipo, labels)
-        distance(qubits_qram,test)
+        encode_data(direcciones, qubits_qram, train, tipo, labels, noise=noise, codigo=codigo)
+        distance(qubits_qram, test, noise=noise)
+        if result == "probs":
+            if noise > 0:
+                qml.AmplitudeDamping(2*noise, wires=0)
+            return qml.probs(wires=range(qubits_qram+qubits_data, n_total-1))
         return qml.state()
 
     return circuit()
 
-# Generador de código Gray de n bits
-def gray_code_inverso(n):
-    if n == 0:
-        return ["0"]
-    if n == 1:
-        return ["0", "1"]
-    prev = gray_code_inverso(n-1)
-    normal = ["0" + x for x in prev] + ["1" + x for x in reversed(prev)]
-    invertido = ["".join("1" if b == "0" else "0" for b in code) for code in normal]
-    return invertido
+def mba_distance(train, test, tipo="biclase", labels=None, codigo="gray", noise=0.0):
+    """
+    Construye un circuito QRAM con la inicializacion de datos y el calculo de la distancia, retorna el circuito para seguir operando
 
-def gray_code(n):
-    if n == 0:
-        return ["0"]
-    if n == 1:
-        return ["0", "1"]
-    prev = gray_code(n-1)
-    return ["0" + x for x in prev] + ["1" + x for x in reversed(prev)]
+    Parámetros
+    ----------
+    train : array-like
+        Conjunto de datos de entrenamiento, cada fila representa un patrón.
+    test : array-like
+        Vector de prueba para el cálculo de distancia.
+    tipo : str, opcional default biclase
+        Tipo de problema:
+        - "biclase" : problema con solo dos clases (una etiqueta por patrón).
+        - "multiclase" : problema con n clases (una etiqueta por patrón).
+        - "multilabel" : problema con múltiples etiquetas binarias por patrón.
+    labels : list, int o None, opcional
+        Etiquetas asociadas a los datos de entrenamiento. Puede ser None si no se usan.
+        En caso de biclase y multiclase retorna int
+    noise : float, opcional
+        Nivel de ruido para aplicar canales de depolarización en el circuito.
+        Por defecto 0.0 (sin ruido).
+    codigo : str, opcional default gray
+        Tipo de codificación para las direcciones en el QRAM:
+        - "binario" : direcciones codificadas en binario
+        - "gray" : drecciones codificadoas en codigo gray.
+        - "diag" : solo las diagonales.
 
-# Inicializar QRAM
-def init_qram(dataset):
-    m, qubits_dato = dataset.shape
-    qubits_qram= int(np.ceil(np.log2(m)))
-    
-    # Generamos Gray code de num_qubits bits
-    gray = gray_code(qubits_qram)
-    # Vector de amplitudes de dimensión 2**n
-    state_vector = np.zeros(2**qubits_qram)
+    Descripción
+    -----------
+    1. Inicializa un QRAM para el número de patrones del conjunto de entrenamiento (`qram_initialize`).
+    2. Aplica codificación de amplitud sobre los qubits de dirección para generar las direcciones equiprobables.
+    3. Inserta los datos de entrenamiento y/o etiquetas en el circuito (`encode_data`),
+       opcionalmente aplicando ruido.
+    4. Aplica rotaciones inversas sobre los qubits de datos para calcular la distancia
+       con el vector de prueba (`distance`).
 
-    # Ponemos 1 en las primeras m posiciones de Gray code
-    for i in range(m):
-        idx = int(gray[i], 2)   # posición en decimal
-        state_vector[idx] = 1
-    # Normalizamos
-    state_vector = state_vector / np.linalg.norm(state_vector)
+    Nota
+    ----
+    Esta función construye el circuito y aplica las operaciones cuánticas, pero no
+    retorna el estado final del sistema.
+    """
+    state_vector, direcciones, qubits_qram, _ = qram_initialize(train, codigo=codigo)
+    qml.AmplitudeEmbedding(state_vector, wires=range(qubits_qram), normalize=True)
+    encode_data(direcciones, qubits_qram, train, tipo, labels, noise=noise, codigo=codigo)
+    distance(qubits_qram, test, noise=noise)
 
-    return state_vector, gray, qubits_qram, qubits_dato
+def distance(qubits_qram, test, noise=0.0):
+    """
+    Aplica la codificación inversa (distancia cuántica) sobre los qubits de datos.
 
-# Inicializar QRAM con 1 en las diagonales
-def init_qram_mod(qubits_qram):
-    m = 2**qubits_qram
-    # Vector de amplitudes de dimensión 2**n
-    state_vector = np.zeros(m)
-
-    # Ponemos 1 en los binarios con un solo 1 (diagonal)
-    for i in range(m):
-        if bin(i).count('1') == 1:
-            state_vector[i] = 1
-    # Normalizamos
-    norm_factor = np.linalg.norm(state_vector)
-    if norm_factor > 0:
-        state_vector /= norm_factor
-    return state_vector
-
-def init_data(gray, qubits_qram, dataset, tipo, labels):
-    for i, datos in enumerate(dataset):
-        addr = [int(b) for b in gray[i]]
-        controls = []
-        
-        # Control en 0 → flip antes y después
-        for k, a in enumerate(addr):
-            if a == 1:
-                controls.append(k)
-            else:
-                qml.PauliX(wires=k)
-                controls.append(k)
-        
-
-        for j, val in enumerate(datos):
-            # Escalamos valor [0,1] a ángulo [0,π]
-            theta = val * np.pi
-            qml.ctrl(qml.RY, control=controls)(theta, wires=qubits_qram + j)
-
-        if labels is not None:
-            if tipo == "biclase":
-                # Un qubit de clase por patrón
-                label = labels[i]  # 0 o 1
-                wire_clase = qubits_qram + len(datos)  # siguiente qubit después de los datos
-                if label == 1:
-                    qml.ctrl(qml.RY, control=controls)(np.pi, wires=wire_clase) # |1> si label=1
-            elif tipo == "multilabel":
-                # Cada elemento del label corresponde a un qubit
-                label_vector = labels[i]  # arreglo de 0 y 1
-                start_wire = qubits_qram + len(datos)
-                for j, val in enumerate(label_vector):
-                    wire_clase = start_wire + j
-                    if val == 1:
-                        qml.ctrl(qml.RY, control=controls)(np.pi, wires=wire_clase) # |1> si label=1
-
-
-        # Control en 0 → flip antes y después
-        for k, a in enumerate(addr):
-            if a == 0:
-                qml.PauliX(wires=k)
-
-
-def init_data2(gray, qubits_qram, dataset, tipo, labels):
-    for k in range(qubits_qram):
-        qml.PauliX(wires=k)
-    g_prev = 0
-    for i, datos in enumerate(dataset):
-        addr = [int(b) for b in gray[i]]
-        controls = range(qubits_qram)
-        g_curr = i ^ (i >> 1)
-        mask = g_prev ^ g_curr
-        lsb_pos = (mask.bit_length() - 1)
-        g_prev = g_curr
-        # Control en 0 → flip antes y después
-        if lsb_pos >= 0:
-            qml.PauliX(wires=lsb_pos)
-
-        for j, val in enumerate(datos):
-            # Escalamos valor [0,1] a ángulo [0,π]
-            theta = val * np.pi
-            qml.ctrl(qml.RY, control=controls)(theta, wires=qubits_qram + j)
-
-        if labels is not None:
-            if tipo == "biclase":
-                # Un qubit de clase por patrón
-                label = labels[i]  # 0 o 1
-                wire_clase = qubits_qram + len(datos)  # siguiente qubit después de los datos
-                if label == 1:
-                    qml.ctrl(qml.RY, control=controls)(np.pi, wires=wire_clase) # |1> si label=1
-            elif tipo == "multilabel":
-                # Cada elemento del label corresponde a un qubit
-                label_vector = labels[i]  # arreglo de 0 y 1
-                start_wire = qubits_qram + len(datos)
-                for j, val in enumerate(label_vector):
-                    wire_clase = start_wire + j
-                    if val == 1:
-                        qml.ctrl(qml.RY, control=controls)(np.pi, wires=wire_clase) # |1> si label=1
-
-
-    # # Control en 0 → flip antes y después
-    addr = [int(b) for b in gray[len(dataset)-1]]
-    for k, a in enumerate(addr):
-        if a == 0:
-            qml.PauliX(wires=len(addr)-k-1)
-
-
-
-def init_data_mod(dataset):
-    q_qram = len(dataset)
-    for i, datos in enumerate(dataset):
-        for j, val in enumerate(datos):
-            # Escalamos valor [0,1] a ángulo [0,π]
-            theta = val * np.pi
-            qml.ctrl(qml.RY, control = i)(theta, wires = q_qram + j)
-
-
-def distance(qubits_qram,test):
+    Parámetros
+    ----------
+    qubits_qram : int
+        Número de qubits de dirección.
+    test : np.ndarray
+        Vector de entrada de prueba, con valores en [0, 1].
+    noise : float, opcional
+        Intensidad del canal de ruido (0.0 desactiva el ruido).
+    """
     for j, val in enumerate(test):
         # Escalamos valor [0,1] a ángulo [0,π]
         theta = -1 * val * np.pi
         # Aplicamos RY inverso en los qubits de dato
         qml.RY(theta, wires=qubits_qram + j)
-
-def distance_noise(qubits_qram,test):
-    for j, val in enumerate(test):
-        # Escalamos valor [0,1] a ángulo [0,π]
-        theta = -1 * val * np.pi
-        # Aplicamos RY inverso en los qubits de dato
-        qml.RY(theta, wires=qubits_qram + j)
-        qml.DepolarizingChannel(0.02, wires=qubits_qram + j)
-
-def init_data_noise(gray, qubits_qram, dataset, tipo, labels):
-    for i, datos in enumerate(dataset):
-        addr = [int(b) for b in gray[i]]
-        controls = []
-        
-        # Control en 0 → flip antes y después
-        for k, a in enumerate(addr):
-            if a == 1:
-                controls.append(k)
-            else:
-                qml.PauliX(wires=k)
-                qml.DepolarizingChannel(0.02, wires=k)
-                controls.append(k)
-        
-
-        for j, val in enumerate(datos):
-            # Escalamos valor [0,1] a ángulo [0,π]
-            theta = val * np.pi
-            qml.ctrl(qml.RY, control=controls)(theta, wires=qubits_qram + j)
-            qml.DepolarizingChannel(0.02, wires=qubits_qram + j)
-
-        if labels is not None:
-            if tipo == "biclase":
-                # Un qubit de clase por patrón
-                label = labels[i]  # 0 o 1
-                wire_clase = qubits_qram + len(datos)  # siguiente qubit después de los datos
-                if label == 1:
-                    qml.ctrl(qml.RY, control=controls)(np.pi, wires=wire_clase)
-                    qml.DepolarizingChannel(0.02, wires=wire_clase)# |1> si label=1
-            elif tipo == "multilabel":
-                # Cada elemento del label corresponde a un qubit
-                label_vector = labels[i]  # arreglo de 0 y 1
-                start_wire = qubits_qram + len(datos)
-                for j, val in enumerate(label_vector):
-                    wire_clase = start_wire + j
-                    if val == 1:
-                        qml.ctrl(qml.RY, control=controls)(np.pi, wires=wire_clase) # |1> si label=1
-                        qml.DepolarizingChannel(0.02, wires=wire_clase)
-
-        # Control en 0 → flip antes y después
-        for k, a in enumerate(addr):
-            if a == 0:
-                qml.PauliX(wires=k)
-                qml.DepolarizingChannel(0.02, wires=k)
-
-def init_data_mod_noise(dataset):
-    q_qram = len(dataset)
-    for i, datos in enumerate(dataset):
-        for j, val in enumerate(datos):
-            # Escalamos valor [0,1] a ángulo [0,π]
-            theta = val * np.pi
-            qml.ctrl(qml.RY, control = i)(theta, wires = q_qram + j)
-            qml.DepolarizingChannel(0.02, wires=q_qram + j)
-
-
-def init_data2_noise(gray, qubits_qram, dataset, tipo, labels):
-    for k in range(qubits_qram):
-        qml.PauliX(wires=k)
-        qml.DepolarizingChannel(0.02, wires=k)
-    g_prev = 0
-    for i, datos in enumerate(dataset):
-        addr = [int(b) for b in gray[i]]
-        controls = range(qubits_qram)
-        g_curr = i ^ (i >> 1)
-        mask = g_prev ^ g_curr
-        lsb_pos = (mask.bit_length() - 1)
-        g_prev = g_curr
-        # Control en 0 → flip antes y después
-        if lsb_pos >= 0:
-            qml.PauliX(wires=lsb_pos)
-            qml.DepolarizingChannel(0.02, wires=lsb_pos)
-
-        for j, val in enumerate(datos):
-            # Escalamos valor [0,1] a ángulo [0,π]
-            theta = val * np.pi
-            qml.ctrl(qml.RY, control=controls)(theta, wires=qubits_qram + j)
-            qml.DepolarizingChannel(0.02, wires=qubits_qram + j)
-
-        if labels is not None:
-            if tipo == "biclase":
-                # Un qubit de clase por patrón
-                label = labels[i]  # 0 o 1
-                wire_clase = qubits_qram + len(datos)  # siguiente qubit después de los datos
-                if label == 1:
-                    qml.ctrl(qml.RY, control=controls)(np.pi, wires=wire_clase) # |1> si label=1
-                    qml.DepolarizingChannel(0.02, wires=wire_clase)
-            elif tipo == "multilabel":
-                # Cada elemento del label corresponde a un qubit
-                label_vector = labels[i]  # arreglo de 0 y 1
-                start_wire = qubits_qram + len(datos)
-                for j, val in enumerate(label_vector):
-                    wire_clase = start_wire + j
-                    if val == 1:
-                        qml.ctrl(qml.RY, control=controls)(np.pi, wires=wire_clase) # |1> si label=1
-                        qml.DepolarizingChannel(0.02, wires=wire_clase)
-
-
-    # # Control en 0 → flip antes y después
-    addr = [int(b) for b in gray[len(dataset)-1]]
-    for k, a in enumerate(addr):
-        if a == 0:
-            qml.PauliX(wires=len(addr)-k-1)
-            qml.DepolarizingChannel(0.02, wires=len(addr)-k-1)
+        if noise > 0:
+            qml.DepolarizingChannel(noise, wires = qubits_qram + j)
 

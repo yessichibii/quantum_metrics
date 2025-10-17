@@ -12,7 +12,7 @@ authors = [
 license = { text="MIT" }
 readme = "README.md"
 requires-python = ">=3.8"
-dependencies = ["numpy", "scipy", "pennylane"]
+dependencies = ["numpy", "scipy", "pennylane","qiskit","qiskit_aer"]
 
 [project.urls]
 Homepage = "https://github.com/yessichibii/quantum_metrics"

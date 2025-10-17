@@ -16,6 +16,9 @@ Python >= 3.8
 NumPy
 SciPy
 PennyLane
+Qiskit
+qiskit_aer
+
 
 Se instalarán automáticamente con pip install -e ., pero también puedes instalarlas manualmente:
 
@@ -50,10 +53,15 @@ quantum-metrics/
 │   └── quantum_metrics/
 │       ├── __init__.py
 │       ├── distances.py
-│       └── qram.py
+│       ├── initialize.py
+│       └── utils.py
 │
 ├── examples/
 │   └── demo.py
+│   └── qml/
+│       ├── modelo_biclase.py
+│       ├── modelo_asociativo.py
+│       └── modelo_multilabel.py
 │
 ├── tests/
 │   └── test_distances.py

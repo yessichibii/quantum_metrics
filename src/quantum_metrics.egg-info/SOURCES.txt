@@ -3,6 +3,8 @@ README.md
 pyproject.toml
 src/quantum_metrics/__init__.py
 src/quantum_metrics/distances.py
+src/quantum_metrics/initialize.py
+src/quantum_metrics/utils.py
 src/quantum_metrics.egg-info/PKG-INFO
 src/quantum_metrics.egg-info/SOURCES.txt
 src/quantum_metrics.egg-info/dependency_links.txt
