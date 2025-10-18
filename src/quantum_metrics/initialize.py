@@ -47,8 +47,10 @@ def qram_initialize(dataset, codigo="gray"):
             for i in range(2**m):
                 if bin(i).count('1') == 1:
                     data.append(format(i, f"0{qubits_qram}b"))
-        case _:
+        case "gray":
             data = gray_code_inverso(qubits_qram)
+        case _:
+            raise ValueError(f'Codigo "{codigo}" no válido')
             
     for i in range(m):
         idx = int(data[i], 2)

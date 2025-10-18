@@ -63,8 +63,10 @@ def state_mba_distance(train, test, tipo="biclase", labels=None, codigo="gray", 
                 n_total += int(np.ceil(np.log2(max(labels))))
             case "multilabel":
                 n_total += len(labels[0])
-            case _:
+            case "biclase":
                 n_total += 1
+            case _:
+                raise ValueError(f'Tipo "{tipo}" no válido')
             
     if backend is not None:
         backend = backend
