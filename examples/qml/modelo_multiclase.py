@@ -1,5 +1,5 @@
 
-from quantum_metrics import h_amplitude_distance, amplitude_distance
+from quantum_metric import h_amplitude_distance, amplitude_distance
 import numpy as np
 import pennylane as qml
 

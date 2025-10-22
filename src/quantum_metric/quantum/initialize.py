@@ -1,6 +1,6 @@
 import pennylane as qml
 import numpy as np
-from .utils import gray_code_inverso, binario_code_inverso
+from ..utils.utils import gray_code_inverso, binario_code_inverso
 
 
 # =============================================================
@@ -128,8 +128,12 @@ def encode_data(direcciones, qubits_qram, dataset, tipo="biclase", labels=None, 
                 case "multilabel":
                     label_addr = labels[i]
                             
-                case _:
+                case "biclase":
                     label_addr = [labels[i]]
+
+                case _:
+                    raise ValueError(f'Tipo "{tipo}" no válido')
+                
             for j, val in enumerate(label_addr):
                 if val == 1:
                     qml.ctrl(qml.RY, control=controls)(np.pi, wires = start_wire + j)

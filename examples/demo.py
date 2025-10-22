@@ -1,9 +1,13 @@
 import numpy as np
 import pennylane as qml
-from quantum_metrics import (
-    gray_code_inverso,gray_code,binario_code_inverso,binario_code,
-    qram_initialize,encode_data,
-    mba_distance,state_mba_distance
+from quantum_metric.utils import (
+    gray_code_inverso, gray_code, binario_code_inverso, binario_code,
+)
+from quantum_metric.quantum import (
+    qram_initialize, encode_data
+)
+from quantum_metric.quantum.distances import (
+    mba_distance, state_mba_distance
 )
 
 
