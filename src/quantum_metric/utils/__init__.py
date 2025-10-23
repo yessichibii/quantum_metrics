@@ -1,16 +1,6 @@
-from .qml import (
-    biclase,
-    asociativo,
-    multilabel
-)
-from .distances import (
-    distance,
-    mba_distance,
-    state_mba_distance
-)
-from .initialize import (
-    qram_initialize,
-    encode_data
+from .params import (
+    cross_entropy,
+    init_params
 )
 from .utils import (
     gray_code,
@@ -23,6 +13,7 @@ from .preprocesamiento import (
     normalizar_escalar,
     escalar,
     binarizar,
+    to_one_hot,
     describir_categoricos,
     imputar_por_clase,
     cargar_archivo,
@@ -30,11 +21,13 @@ from .preprocesamiento import (
     guardar_objetos,
     cargar_objetos
 )
+
 __all__ = [
     "normalizar",
     "normalizar_escalar",
     "escalar",
     "binarizar",
+    "to_one_hot",
     "describir_categoricos",
     "imputar_por_clase",
     "cargar_archivo",
@@ -47,10 +40,5 @@ __all__ = [
     "binario_code_inverso",
     "qram_initialize",
     "encode_data",
-    "distance",
-    "mba_distance",
-    "state_mba_distance",
-    "biclase",
-    "asociativo",
-    "multilabel"
+    "init_params"
 ]

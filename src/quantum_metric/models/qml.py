@@ -1,7 +1,7 @@
 import pennylane as qml
 from qiskit_aer.noise import NoiseModel
 import numpy as np
-from .distances import mba_distance
+from ..quantum.distances import mba_distance
 
 def biclase(train, test, labels=None, codigo="gray", noise = 0.0, backend = None, result = "probs", shots = 1024):
     """

@@ -142,6 +142,17 @@ def binarizar(datos, tipo="ambos"):
 
     return resultado
 
+def to_one_hot(y, n_classes = None):
+    y = np.asarray(y, dtype=int)
+    if y.ndim == 2:
+        return np.array(y)
+    if n_classes is None:
+        n_classes = int(y.max()) + 1
+    oh = np.zeros((len(y), n_classes))
+    for i, val in enumerate(y):
+        oh[i, int(val)] = 1.0
+    return oh
+
 def describir_categoricos(data, categoricos):
     """
     Convierte columnas categóricas a números (Label Encoding) de forma independiente por columna.
