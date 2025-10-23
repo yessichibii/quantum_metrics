@@ -11,6 +11,50 @@ from ..utils.preprocesamiento import to_one_hot
 
 class QMLBiClase(QuantumBaseModel):
 
+    """
+    Clasificador binario con circuitos cuánticos parametrizados.
+
+    Inicialización
+    --------------
+    Parameters
+    - codigo: str
+        Método de codificación de datos en qubits (ej. "gray", "binario", "diag").
+    - noise: float
+        Nivel de ruido simulado aplicado durante la ejecución del circuito.
+    - backend: Optional[Any]
+        Backend cuántico o simulador. Si None, se usa el backend por defecto del paquete.
+    - noise_model: Optional[Any]
+        Modelo de ruido para el backend (si aplica).
+    - result: str
+        Tipo de resultado solicitado: "probs" (probabilidades) o "state" (vector de estado).
+    - shots: int
+        Número de ejecuciones (shots) cuando se utiliza simulación por muestreo.
+    - lr: float
+        Tasa de aprendizaje por defecto para optimizadores basados en gradiente.
+    - epochs: int
+        Número máximo de iteraciones de entrenamiento.
+    - optimize: bool
+        Si True, se intentan optimizaciones/ajustes de hiperparámetros durante fit.
+    - rng: Union[int, float]
+        Semilla o factor aleatorio para inicialización de parámetros.
+    - k_folds: Optional[int]
+        Parámetro de conveniencia cuando se invocan métodos de validación interna.
+    - test_size: float
+        Proporción usada en hold-out si se emplea fit_validation.
+    - **kwargs:
+        Parámetros adicionales dependientes de la implementación (p. ej. early_stopping).
+
+    Atributos públicos (esperados)
+    - best_params_: Optional[dict]
+        Diccionario con parámetros del mejor modelo encontrados por optimización/validación.
+    - params_: Optional[np.ndarray]
+        Parámetros entrenados del circuito (vectores).
+    - val_labels_: Optional[np.ndarray]
+        Etiquetas de validación cuando se llama fit_validation.
+    - val_preds_: Optional[np.ndarray]
+        Predicciones de validación asociadas.
+    """
+
     def __init__(self, codigo="gray", noise=0.0, backend=None,
                  noise_model=None, result="probs", shots=1024,
                  lr=0.1, epochs=50, optimize=True, rng=0.5, k_folds=5, test_size=0.2):
@@ -60,6 +104,17 @@ class QMLBiClase(QuantumBaseModel):
         self.folds = [(data[train], labels[train], data[test], labels[test]) for train, test in kf.split(data)]
 
     def fit_validation(self, data, labels, partitions=None):
+        
+        """
+        Entrenamiento con validación interna (hold-out o k-fold).
+        - Si k_folds es None y self.k_folds está definido, usa self.k_folds.
+        - Si k_folds == 1: realiza hold-out con test_size.
+        - Si k_folds >= 2: realiza k-fold.
+
+        Guarda en self.val_labels_ y self.val_preds_ los conjuntos de validación
+        finales y devuelve un diccionario con métricas / mejores parámetros.
+
+        """
 
         if data is None or labels is None:
             raise ValueError("fit_validation: 'data' y 'labels' no pueden ser None.")
@@ -81,6 +136,24 @@ class QMLBiClase(QuantumBaseModel):
         return self
     
     def fit(self, X_train, y_train, X_test, y_test):
+
+        """
+        Entrena el modelo usando el conjunto (X, y).
+
+        Firma flexible: muchos demos y utilidades intentarán llamar a fit con
+        combinaciones de (epochs, lr, rng, optimize). Esta implementación
+        intenta aceptar kwargs extra sin fallar.
+
+        Returns
+        -------
+        self
+            Instancia entrenada (modifica self.params_ y opcionalmente self.best_params_).
+
+        Comportamiento esperado
+        - Si el método soporta optimización de hiperparámetros (optimize=True),
+          actualizar self.best_params_ con la mejor configuración encontrada.
+        - Guardar parámetros finales en self.params_.
+        """
 
         if X_train is None or y_train is None:
             raise ValueError("fit: X_train y y_train son requeridos.")
@@ -189,6 +262,20 @@ class QMLBiClase(QuantumBaseModel):
         return self
 
     def predict(self, test = None, train = None, y_train = None, method = "max"):
+        """
+        Devuelve etiquetas discretas (0/1) para las entradas X.
+
+        Parameters
+        - method: str
+            "threshold" (usar predict_proba y umbral), "mean" (usar promedio de múltiples
+            ejecuciones), u otras estrategias propias.
+        - threshold: float
+            Umbral para convertir probabilidad en etiqueta (p>=threshold -> 1).
+
+        Returns
+        -------
+        preds: np.ndarray (dtype int)
+        """
         if test is None:
             test = self.val_data_
 

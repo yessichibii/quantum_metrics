@@ -3,10 +3,30 @@ import numpy as np
 from qiskit_aer.noise import NoiseModel
 from .distances import mba_distance, distance
 
-def make_device(n_wires: int, backend=None, shots: int = 1024, noise_model=None):
+def make_device(n_wires: int, backend=None, shots: int = 1024, noise_model=None, sample_mode: bool = False):
+    """
+    Crea un dispositivo de simulación cuántica.
+
+    Args:
+        n_wires (int): Número de qubits (wires)
+        backend: Backend opcional de Qiskit
+        shots (int): Número de mediciones por muestreo
+        noise_model: Modelo de ruido (si se desea simular decoherencia)
+        sample_mode (bool): Si True, simula muestreo sin ruido
+
+    Returns:
+        qml.Device: Dispositivo de PennyLane configurado
+    """
+    
     if backend is not None:
         nm = NoiseModel.from_backend(backend) if noise_model is None else noise_model
         return qml.device("qiskit.aer", wires=n_wires, backend="qasm_simulator", noise_model=nm, shots=shots)
+    
+    # ✅ Caso: simulación sin ruido pero con muestreo
+    if sample_mode:
+        return qml.device("default.qubit", wires=n_wires, shots=shots)
+    
+    # ✅ Caso: simulación ideal (sin muestreo)
     return qml.device("default.qubit", wires=n_wires)
 
 def build_biclase_qnode(train, y_train, n_totales, qubits_qram, qubits_dato, device, codigo="gray", noise=0.0, result="probs"):
