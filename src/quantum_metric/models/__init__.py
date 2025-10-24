@@ -1,4 +1,5 @@
 from .qml_biclase import QMLBiClase
+from .qml_multiclase import QMLMultiClase
 
 from .parametricos import (
     biclase_param,
@@ -14,6 +15,7 @@ from .qml import (
 
 __all__ = [
     "QMLBiClase",
+    "QMLMultiClase",
     "biclase",
     "asociativo",
     "multilabel",

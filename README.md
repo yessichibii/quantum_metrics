@@ -42,9 +42,13 @@ import numpy as np
 X = np.random.random((100, 4))
 y = np.random.randint(0, 2, 100)
 
-# Modelo con inicialización aleatoria (por defecto)
-model = QMLBiClase(codigo="gray", epochs=20)
-model.fit(X, y)
+# Modelo binario con inicialización aleatoria (por defecto)
+model_binary = QMLBiClase(codigo="gray", epochs=20)
+model_binary.fit(X, y)
+
+# Modelo multiclase con inicialización aleatoria (por defecto)
+model_multiclass = QMLMultiClase(codigo="gray", epochs=20)
+model_multiclass.fit(X, y)
 
 # Modelo con pesos específicos
 initial_weights = np.random.random(4) * 0.1
@@ -63,8 +67,8 @@ model_no_weights = QMLBiClase(
 model_no_weights.fit(X, y)
 
 # Predicciones
-predictions = model.predict(X)
-probabilities = model.predict_proba(X)
+predictions = model_binary.predict(X)
+probabilities = model_binary.predict_proba(X)
 ```
 
 ### 🔧 Pesos y Optimización
@@ -80,6 +84,20 @@ Los modelos cuánticos soportan pesos personalizados y control de optimización:
 - Si es `True` (por defecto), utiliza optimización de pesos
 - Si es `False`, solo ejecuta el circuito cuántico sin optimizar pesos
 - Útil para evaluar el rendimiento del clasificador base sin entrenamiento
+
+### 🔄 Diferencias entre QMLBiClase y QMLMultiClase
+
+**QMLBiClase (Clasificación Binaria):**
+- Circuito: `qubits_qram + qubits_dato + 2 qubits`
+- Incluye CNOT después del bucle de rotación
+- Optimizado para 2 clases
+- Salida: probabilidades para 2 clases
+
+**QMLMultiClase (Clasificación Multiclase):**
+- Circuito: `qubits_qram + qubits_dato + qubits_label + 1 qubit`
+- NO incluye CNOT después del bucle de rotación
+- Optimizado para múltiples clases
+- Salida: probabilidades para múltiples clases
 
 # 📂 Estructura del proyecto
 quantum-metrics/

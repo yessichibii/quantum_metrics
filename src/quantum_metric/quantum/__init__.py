@@ -11,7 +11,7 @@ from .initialize import (
 from .distances import (
     distance,
     mba_distance,
-    state_mba_distance
+    # state_mba_distance
 )
 
 __all__ = [
@@ -21,5 +21,5 @@ __all__ = [
     "encode_data",
     "distance",
     "mba_distance",
-    "state_mba_distance"
+    # "state_mba_distance"
 ]

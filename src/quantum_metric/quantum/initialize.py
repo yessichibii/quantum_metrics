@@ -113,6 +113,7 @@ def encode_data(direcciones, qubits_qram, dataset, tipo="biclase", labels=None, 
         
         # Codificación de datos
         for j, val in enumerate(datos):
+            print(f"val datos: {val}")
             theta = val * np.pi
             # print(f"controls: {controls} - {qubits_qram + j}")
             qml.ctrl(qml.RY, control=controls)(theta, wires=qubits_qram + j)
@@ -125,9 +126,10 @@ def encode_data(direcciones, qubits_qram, dataset, tipo="biclase", labels=None, 
             label_addr = []
             match tipo:
                 case "multiclase":
-                    qubits_label = int(np.ceil(np.log2(max(labels))))
+                    qubits_label = int(np.ceil(np.log2(len(np.unique(labels)))))
                     label_binario = format(labels[i], f"0{qubits_label}b")
                     label_addr = [int(b) for b in label_binario]
+                    print(f"label_addr: {label_addr}")
                     
                 case "multilabel":
                     label_addr = labels[i]
@@ -139,6 +141,7 @@ def encode_data(direcciones, qubits_qram, dataset, tipo="biclase", labels=None, 
                     raise ValueError(f'Tipo "{tipo}" no válido')
                 
             for j, val in enumerate(label_addr):
+                print(f"val label: {val}")
                 if val == 1:
                     # print(f"controls: {controls} - {start_wire + j}")
                     qml.ctrl(qml.RY, control=controls)(np.pi, wires = start_wire + j)

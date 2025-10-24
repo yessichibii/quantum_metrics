@@ -146,6 +146,16 @@ try:
     model = QMLBiClase(weights=[1, 2, 3])  # ❌ Longitud incorrecta
 except ValueError as e:
     print(e)  # "Los pesos deben tener longitud X, pero se proporcionaron 3 pesos"
+
+# Uso del modelo multiclase
+from quantum_metric.models import QMLMultiClase
+
+# Clasificación multiclase
+X_multi, y_multi = make_classification(n_samples=100, n_features=4, n_classes=3)
+model_multi = QMLMultiClase(codigo="gray", epochs=20)
+model_multi.fit(X_multi, y_multi)
+predictions_multi = model_multi.predict(X_multi)
+probabilities_multi = model_multi.predict_proba(X_multi)
 ```
 
 ```python
