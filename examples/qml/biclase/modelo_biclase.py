@@ -1,5 +1,5 @@
 
-from quantum_metric.quantum.distances import state_mba_distance, mba_distance
+from quantum_metric.quantum.distances import  mba_distance
 import numpy as np
 import pennylane as qml
 
@@ -7,9 +7,9 @@ x_train = np.array([[0.0], [1.0]])
 y_train = np.array([1, 0])
 test = [0.0]
 
-state = state_mba_distance(x_train, test, labels=y_train)
-print("Estado cuántico:", state)
-print("Norma:", np.sum(np.abs(state) ** 2))
+# state = state_mba_distance(x_train, test, labels=y_train)
+# print("Estado cuántico:", state)
+# print("Norma:", np.sum(np.abs(state) ** 2))
 
 m, qubits_dato = x_train.shape
 qubits_qram= int(np.ceil(np.log2(m)))
