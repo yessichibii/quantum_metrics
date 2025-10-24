@@ -28,23 +28,58 @@ pip install numpy scipy pennylane
 
 Puedes importar las funciones directamente desde el paquete:
 
+
+
+## 🎯 Modelos de Machine Learning Cuántico
+
+La librería incluye modelos de clasificación cuántica con soporte para parámetros iniciales personalizados:
+
+```python
+from quantum_metric.models import QMLBiClase
 import numpy as np
-from quantum_metrics import trace_distance, fidelity, h_amplitude_distance
 
-# Ejemplo 1: Distancia traza y fidelidad entre dos matrices densidad
-rho = np.array([[1, 0], [0, 0]], dtype=complex)   # |0⟩
-sigma = np.array([[0.5, 0.5], [0.5, 0.5]], dtype=complex)  # |+⟩
+# Datos de ejemplo
+X = np.random.random((100, 4))
+y = np.random.randint(0, 2, 100)
 
-print("Distancia traza:", trace_distance(rho, sigma))
-print("Fidelidad:", fidelity(rho, sigma))
+# Modelo con inicialización aleatoria (por defecto)
+model = QMLBiClase(codigo="gray", epochs=20)
+model.fit(X, y)
 
-# Ejemplo 2: Distancia híbrida con QRAM
-dataset = np.array([[0.0], [1.0]])  # Datos de entrenamiento
-test = [0.5]                        # Vector de prueba
+# Modelo con pesos específicos
+initial_weights = np.random.random(4) * 0.1
+model_with_weights = QMLBiClase(
+    codigo="gray", 
+    epochs=20, 
+    weights=initial_weights
+)
+model_with_weights.fit(X, y)
 
-state = h_amplitude_distance(dataset, test)
-print("Estado cuántico resultante:", state)
-print("Norma del estado:", np.sum(np.abs(state)**2))
+# Modelo sin optimización de pesos (solo clasificador)
+model_no_weights = QMLBiClase(
+    codigo="gray", 
+    use_weights=False
+)
+model_no_weights.fit(X, y)
+
+# Predicciones
+predictions = model.predict(X)
+probabilities = model.predict_proba(X)
+```
+
+### 🔧 Pesos y Optimización
+
+Los modelos cuánticos soportan pesos personalizados y control de optimización:
+
+- **`weights`**: Array de pesos específicos para el circuito cuántico
+- Si es `None` (por defecto), se inicializan aleatoriamente
+- Debe tener la longitud correcta según el número de características
+- Se valida automáticamente que sean números finitos y válidos
+
+- **`use_weights`**: Controla si se optimizan los pesos durante el entrenamiento
+- Si es `True` (por defecto), utiliza optimización de pesos
+- Si es `False`, solo ejecuta el circuito cuántico sin optimizar pesos
+- Útil para evaluar el rendimiento del clasificador base sin entrenamiento
 
 # 📂 Estructura del proyecto
 quantum-metrics/

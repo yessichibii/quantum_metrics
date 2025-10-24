@@ -84,6 +84,8 @@ def encode_data(direcciones, qubits_qram, dataset, tipo="biclase", labels=None, 
     codigo: str, default gray
         'gray', 'diag' o 'binario' para definir el tipo de salida.
     """
+    # print(f"n_totales: {direcciones}")
+    # print(f"qubits_qram: {qubits_qram}")
 
     g_prev = 2**qubits_qram -1
     recuperar_estado = []
@@ -100,6 +102,7 @@ def encode_data(direcciones, qubits_qram, dataset, tipo="biclase", labels=None, 
             g_prev = g_curr
             
             for pos in lsb_pos:
+                # print(f"pos: {pos}")
                 if pos in recuperar_estado:
                     recuperar_estado.remove(pos)
                 else:
@@ -111,6 +114,7 @@ def encode_data(direcciones, qubits_qram, dataset, tipo="biclase", labels=None, 
         # Codificación de datos
         for j, val in enumerate(datos):
             theta = val * np.pi
+            # print(f"controls: {controls} - {qubits_qram + j}")
             qml.ctrl(qml.RY, control=controls)(theta, wires=qubits_qram + j)
             if noise > 0:
                 qml.DepolarizingChannel(noise, wires=qubits_qram + j)
@@ -136,12 +140,14 @@ def encode_data(direcciones, qubits_qram, dataset, tipo="biclase", labels=None, 
                 
             for j, val in enumerate(label_addr):
                 if val == 1:
+                    # print(f"controls: {controls} - {start_wire + j}")
                     qml.ctrl(qml.RY, control=controls)(np.pi, wires = start_wire + j)
                     if noise > 0:
                         qml.DepolarizingChannel(noise, wires = start_wire + j)
 
         # Restauración del control 
         for pos in recuperar_estado:
+            # print(f"pos: {pos}")
             qml.PauliX(wires=pos)
             if noise > 0:
                 qml.DepolarizingChannel(noise, wires=pos)

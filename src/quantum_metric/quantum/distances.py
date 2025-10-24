@@ -137,6 +137,8 @@ def mba_distance(train, test, tipo="biclase", labels=None, codigo="gray", noise=
     retorna el estado final del sistema.
     """
     state_vector, direcciones, qubits_qram, _ = qram_initialize(train, codigo=codigo)
+    # print(f"n_totales: {direcciones}")
+    # print(f"qubits_qram: {qubits_qram}")
     qml.AmplitudeEmbedding(state_vector, wires=range(qubits_qram), normalize=True)
     encode_data(direcciones, qubits_qram, train, tipo, labels, noise=noise, codigo=codigo)
     distance(qubits_qram, test, noise=noise)
