@@ -43,10 +43,10 @@ def demonstrate_custom_weights():
     print("\n🎲 Modelo con inicialización aleatoria (por defecto)...")
     model_random = QMLMultiClase(
         codigo="gray",
-        epochs=15,
+        epochs=20,
         lr=0.1,
         random_state=42,
-        verbose=False
+        verbose=True
     )
     
     model_random.fit(X_train, y_train)
@@ -56,86 +56,86 @@ def demonstrate_custom_weights():
     print(f"Accuracy (random init): {accuracy_random:.4f}")
     print(f"Loss: {model_random.best_loss_:.6f}")
     
-    # Diferentes estrategias de inicialización
-    print("\n🎯 Comparando diferentes estrategias de inicialización...")
-    strategies = {
-        "Todos ceros": np.zeros(3),
-        "Valores pequeños": np.array([0.01, -0.01, 0.02]),
-        "Aleatorio pequeño": np.random.random(3) * 0.1,
-        "Valores específicos": np.array([0.1, -0.2, 0.15])
-    }
+    # # Diferentes estrategias de inicialización
+    # print("\n🎯 Comparando diferentes estrategias de inicialización...")
+    # strategies = {
+    #     "Todos ceros": np.zeros(3),
+    #     "Valores pequeños": np.array([0.01, -0.01, 0.02]),
+    #     "Aleatorio pequeño": np.random.random(3) * 0.1,
+    #     "Valores específicos": np.array([0.1, -0.2, 0.15])
+    # }
     
-    results = {}
+    # results = {}
     
-    for strategy_name, weights in strategies.items():
-        print(f"\n  📈 Estrategia: {strategy_name}")
-        print(f"  Pesos: {weights}")
+    # for strategy_name, weights in strategies.items():
+    #     print(f"\n  📈 Estrategia: {strategy_name}")
+    #     print(f"  Pesos: {weights}")
         
-        model_custom = QMLMultiClase(
-            codigo="gray",
-            epochs=15,
-            lr=0.1,
-            random_state=42,
-            verbose=False,
-            weights=weights
-        )
+    #     model_custom = QMLMultiClase(
+    #         codigo="gray",
+    #         epochs=15,
+    #         lr=0.1,
+    #         random_state=42,
+    #         verbose=False,
+    #         weights=weights
+    #     )
         
-        model_custom.fit(X_train, y_train)
-        y_pred_custom = model_custom.predict(X_test)
-        accuracy_custom = accuracy_score(y_test, y_pred_custom)
+    #     model_custom.fit(X_train, y_train)
+    #     y_pred_custom = model_custom.predict(X_test)
+    #     accuracy_custom = accuracy_score(y_test, y_pred_custom)
         
-        results[strategy_name] = {
-            'accuracy': accuracy_custom,
-            'loss': model_custom.best_loss_,
-            'weights': weights
-        }
+    #     results[strategy_name] = {
+    #         'accuracy': accuracy_custom,
+    #         'loss': model_custom.best_loss_,
+    #         'weights': weights
+    #     }
         
-        print(f"  Accuracy: {accuracy_custom:.4f}")
-        print(f"  Pérdida final: {model_custom.best_loss_:.6f}")
+    #     print(f"  Accuracy: {accuracy_custom:.4f}")
+    #     print(f"  Pérdida final: {model_custom.best_loss_:.6f}")
     
-    # Comparación de resultados
-    print("\n📊 Comparación de Resultados:")
-    print(f"Random init: {accuracy_random:.4f}")
-    for strategy_name, result in results.items():
-        print(f"{strategy_name}: {result['accuracy']:.4f}")
+    # # Comparación de resultados
+    # print("\n📊 Comparación de Resultados:")
+    # print(f"Random init: {accuracy_random:.4f}")
+    # for strategy_name, result in results.items():
+    #     print(f"{strategy_name}: {result['accuracy']:.4f}")
     
-    # Encontrar la mejor estrategia
-    best_strategy = max(results.items(), key=lambda x: x[1]['accuracy'])
-    print(f"\n🏆 Mejor estrategia: {best_strategy[0]} (Accuracy: {best_strategy[1]['accuracy']:.4f})")
+    # # Encontrar la mejor estrategia
+    # best_strategy = max(results.items(), key=lambda x: x[1]['accuracy'])
+    # print(f"\n🏆 Mejor estrategia: {best_strategy[0]} (Accuracy: {best_strategy[1]['accuracy']:.4f})")
     
-    # Ejemplo de validación de parámetros incorrectos
-    print("\n⚠️  Ejemplo de validación de parámetros incorrectos...")
+    # # Ejemplo de validación de parámetros incorrectos
+    # print("\n⚠️  Ejemplo de validación de parámetros incorrectos...")
     
-    try:
-        # Pesos con longitud incorrecta
-        wrong_weights = np.array([0.1, 0.2])  # Solo 2 pesos cuando necesitamos 3
-        model_wrong = QMLMultiClase(
-            codigo="gray",
-            epochs=5,
-            weights=wrong_weights
-        )
-        model_wrong.fit(X_train, y_train)
-    except ValueError as e:
-        print(f"Error esperado: {e}")
+    # try:
+    #     # Pesos con longitud incorrecta
+    #     wrong_weights = np.array([0.1, 0.2])  # Solo 2 pesos cuando necesitamos 3
+    #     model_wrong = QMLMultiClase(
+    #         codigo="gray",
+    #         epochs=5,
+    #         weights=wrong_weights
+    #     )
+    #     model_wrong.fit(X_train, y_train)
+    # except ValueError as e:
+    #     print(f"Error esperado: {e}")
     
-    try:
-        # Pesos con valores no finitos
-        invalid_weights = np.array([0.1, np.inf, 0.3])
-        model_invalid = QMLMultiClase(
-            codigo="gray",
-            epochs=5,
-            weights=invalid_weights
-        )
-        model_invalid.fit(X_train, y_train)
-    except ValueError as e:
-        print(f"Error esperado: {e}")
+    # try:
+    #     # Pesos con valores no finitos
+    #     invalid_weights = np.array([0.1, np.inf, 0.3])
+    #     model_invalid = QMLMultiClase(
+    #         codigo="gray",
+    #         epochs=5,
+    #         weights=invalid_weights
+    #     )
+    #     model_invalid.fit(X_train, y_train)
+    # except ValueError as e:
+    #     print(f"Error esperado: {e}")
     
-    print("\n✅ Ejemplo completado exitosamente!")
-    print("\nCaracterísticas demostradas:")
-    print("- Uso de pesos personalizados")
-    print("- Comparación de diferentes estrategias de inicialización")
-    print("- Validación automática de pesos")
-    print("- Manejo de errores con mensajes informativos")
+    # print("\n✅ Ejemplo completado exitosamente!")
+    # print("\nCaracterísticas demostradas:")
+    # print("- Uso de pesos personalizados")
+    # print("- Comparación de diferentes estrategias de inicialización")
+    # print("- Validación automática de pesos")
+    # print("- Manejo de errores con mensajes informativos")
 
 
 def demonstrate_weight_validation():
@@ -208,4 +208,4 @@ def demonstrate_weight_validation():
 
 if __name__ == "__main__":
     demonstrate_custom_weights()
-    demonstrate_weight_validation()
+    # demonstrate_weight_validation()

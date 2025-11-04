@@ -1,9 +1,8 @@
-from autograd import numpy as anp
-import numpy as np
+from pennylane import numpy as pnp
 from typing import Optional, Union
 import warnings
 
-def init_params(n: int, init: Optional[Union[anp.ndarray, list, np.ndarray]] = None, rng: float = 0.5) -> anp.ndarray:
+def init_params(n: int, init: Optional[Union[pnp.ndarray, list]] = None, rng: float = 0.5) -> pnp.ndarray:
     """
     Inicializa parámetros para circuitos cuánticos.
     
@@ -26,11 +25,11 @@ def init_params(n: int, init: Optional[Union[anp.ndarray, list, np.ndarray]] = N
     ValueError
         Si los pesos no tienen la longitud correcta.
     """
-    if init is None or (isinstance(init, (list, np.ndarray)) and len(init) == 0):
-        return anp.array(anp.random.uniform(-rng, rng, n))
+    if init is None or (isinstance(init, (list, pnp.ndarray)) and len(init) == 0):
+        return pnp.array(pnp.random.uniform(-rng, rng, n), requires_grad=True)
     
     # Convertir a array de numpy/autograd
-    init_array = anp.array(init)
+    init_array = pnp.array(init)
     
     # Validar longitud
     if len(init_array) != n:
@@ -40,15 +39,16 @@ def init_params(n: int, init: Optional[Union[anp.ndarray, list, np.ndarray]] = N
         )
     
     # Validar que sean números finitos
-    if not anp.all(anp.isfinite(init_array)):
+    if not pnp.all(pnp.isfinite(init_array)):
         raise ValueError("Los pesos deben ser números finitos")
     
-    if not anp.all((init_array >= -1) & (init_array <= 1)):
+    if not pnp.all((init_array >= -1) & (init_array <= 1)):
         raise ValueError("Los pesos deben estar en el rango [-1, 1]")
-    return init_array
+
+    return pnp.array(init_array, requires_grad=True)
 
 def cross_entropy(labels, predictions):
     epsilon = 1e-15
-    predictions = anp.clip(predictions, epsilon, 1 - epsilon)
-    loss = -anp.sum(labels * anp.log(predictions)) / len(labels)
+    predictions = pnp.clip(predictions, epsilon, 1 - epsilon)
+    loss = -pnp.sum(labels * pnp.log(predictions)) / len(labels)
     return loss

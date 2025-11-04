@@ -122,7 +122,7 @@ def main():
     strategies = {
         "Aleatorio": None,  # Usar inicialización por defecto
         "Aleatorio pequeño": np.random.random(3) * 0.1,
-        "Valores específicos": np.array([0.1, -0.2])
+        "Valores específicos": np.array([0.1, -0.2, 0.15])
     }
     
     for strategy_name, init_params in strategies.items():

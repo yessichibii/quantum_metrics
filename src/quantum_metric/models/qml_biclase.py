@@ -1,5 +1,5 @@
 import numpy as np
-from autograd import numpy as anp
+from pennylane import numpy as pnp
 from collections import defaultdict
 import warnings
 from typing import Optional, Union, Any, Tuple
@@ -415,10 +415,23 @@ class QMLBiClase(QuantumBaseModel):
         dev = make_device(n_totales, backend=self.backend, shots=self.shots, noise_model=self.noise_model)
         params = init_params(qubits_dato, init=self.weights, rng=self.wr)
         
+        if isinstance(params, np.ndarray):
+            # Convertir a array de autograd explícitamente
+            params = pnp.array(params, dtype=pnp.float64, requires_grad=True)
+        else:
+            # Asegurar que sea array de autograd
+            params = pnp.array(params, requires_grad=True)
+        
         # Initialize optimizer only if needed
         opt = None
         if self.use_weights:
             opt = qml.AdamOptimizer(stepsize=self.lr)
+            
+            # DIAGNÓSTICO: Verificar que los parámetros iniciales sean arrays de autograd
+            if self.verbose:
+                print(f"Initial params type: {type(params)}")
+                print(f"Initial params: {params}")
+                print(f"Initial params shape: {params.shape if hasattr(params, 'shape') else 'N/A'}")
         # print("=============ENTRENANDO=============")
         # Build quantum circuit
         try:
@@ -435,7 +448,11 @@ class QMLBiClase(QuantumBaseModel):
 
         # Define cost function
         def cost(p, tests, y_test):
-            return self._compute_cost(p, tests, y_test, circuit_callable)
+            loss = self._compute_cost(p, tests, y_test, circuit_callable)
+            # DIAGNÓSTICO: Verificar tipo del loss (solo en primera llamada)
+            if self.verbose and len(loss_history) == 0:
+                print(f"Cost function returned type: {type(loss)}, value: {loss}")
+            return loss
 
         # Store training data for prediction
         self.train_data_ = X
@@ -452,8 +469,17 @@ class QMLBiClase(QuantumBaseModel):
             # Training with optimizer
             for epoch in range(self.epochs):
                 try:
-                    params, loss_new = opt.step_and_cost(lambda v: cost(v, X_val if X_val is not None else X, 
-                                                                      y_val if y_val is not None else y), params)
+                    # Función de costo que el optimizador llamará
+                    def cost_fn(v):
+                        v = pnp.array(v, dtype=pnp.float64, requires_grad=True)
+                        return cost(v, X_val if X_val is not None else X, 
+                                   y_val if y_val is not None else y)
+                    
+                    params, loss_new = opt.step_and_cost(cost_fn, params)
+                    
+                    # Debug: verificar que los parámetros y el loss cambian
+                    if self.verbose and epoch % 10 == 0:
+                        print(f"Epoch {epoch}: Loss = {loss_new:.6f}")
                 except Exception as e:
                     warnings.warn(
                         f"Optimizer failed at epoch {epoch}: {e}. Stopping training.", 
@@ -532,10 +558,11 @@ class QMLBiClase(QuantumBaseModel):
                     outs = []
                     for q in circuit:
                         if callable(q):
-                            outs.append(q(test=test, params=params))
+                            outs.append(q(test, params))
                         else:
                             outs.append(q)
-                    return np.asarray(outs)
+                    # Usar anp.array en lugar de np.asarray para preservar diferenciación
+                    return pnp.array(outs)
                 except Exception as e:
                     raise RuntimeError(f"Error in wrapped circuit: {e}")
             return _wrapped_circuit
@@ -544,31 +571,87 @@ class QMLBiClase(QuantumBaseModel):
 
     def _compute_cost(self, p, tests, y_test, circuit_callable):
         """Compute cost function for training."""
-        probs = []
-        # print(tests)
-        for test in tests:
-            # print(f"************ test: {test}**************************************************")
+        # Convertir tests a array de autograd si es necesario para mantener diferenciación
+        # Aunque los datos de entrada no necesitan ser diferenciables, asegurarse de que
+        # las operaciones se realicen con arrays compatibles con autograd
+        if isinstance(tests, np.ndarray) and not isinstance(tests, pnp.ndarray):
+            # Convertir a array de numpy regular si no es autograd (los datos no necesitan diferenciación)
+            tests = np.array(tests)
+        
+        # Acumular probabilidades manteniendo diferenciación
+        # IMPORTANTE: construir la lista y luego convertir todo de una vez
+        probs_list = []
+        
+        for i in range(len(tests)):
+            test = tests[i]
             try:
-                predict = circuit_callable(test=test, params=p)
-                probs.append(np.asarray(predict))
+                # Ejecutar circuito: PennyLane con interface="autograd" devuelve arrays diferenciables
+                # Asegurar que test sea un array 1D de numpy
+                test_array = np.array(test) if not isinstance(test, np.ndarray) else test
+                # CRÍTICO: Asegurar que p (params) sea un array de autograd antes de pasarlo al circuito
+                # Esto es esencial para que PennyLane reconozca los parámetros como entrenables
+                if isinstance(p, np.ndarray) and not hasattr(p, '_value'):
+                    # Si p es numpy regular, convertir a autograd
+                    p_autograd = pnp.array(p)
+                else:
+                    p_autograd = p
+                
+                # CRÍTICO: Pasar argumentos POSICIONALMENTE, no con nombres
+                # PennyLane con autograd puede tener problemas reconociendo parámetros entrenables
+                # cuando se pasan con nombres de argumentos
+                predict = circuit_callable(test_array, p_autograd)
+                
+                # Los arrays que vienen de PennyLane con interface="autograd" ya son diferenciables
+                # NO convertir con anp.array() porque podría desconectar del grafo original
+                # Solo agregar directamente a la lista
+                probs_list.append(predict)
             except Exception as e:
                 warnings.warn(
-                    f"Failed to execute QNode for test sample: {e}. "
+                    f"Failed to execute QNode for test sample {i}: {e}. "
                     f"Using uniform probability.", UserWarning
                 )
                 n_classes = 2  # Binary classification
-                probs.append(np.ones(n_classes) / n_classes)
+                probs_list.append(pnp.ones(n_classes) / n_classes)
         
+        # Apilar probabilidades usando autograd para mantener diferenciación
+        # CRÍTICO: usar anp.vstack, NO np.vstack
+        # Los arrays en probs_list ya vienen diferenciables de PennyLane
         try:
-            probs_arr = np.vstack(probs)
-        except Exception:
-            probs_arr = np.array(probs)
+            probs_arr = pnp.vstack(probs_list)
+        except (ValueError, TypeError) as e:
+            # Si vstack falla por dimensiones, intentar reshape manual
+            warnings.warn(f"vstack failed: {e}. Trying alternative method.", UserWarning)
+            try:
+                # Asegurar que cada elemento sea 2D antes de concatenar
+                probs_reshaped = []
+                for p in probs_list:
+                    p_arr = pnp.array(p)  # Convertir solo si es necesario
+                    if len(p_arr.shape) == 1:
+                        probs_reshaped.append(pnp.reshape(p_arr, (1, -1)))
+                    else:
+                        probs_reshaped.append(p_arr)
+                probs_arr = pnp.vstack(probs_reshaped)
+            except Exception as e2:
+                warnings.warn(f"Alternative stacking also failed: {e2}. Using concatenate.", UserWarning)
+                # Último recurso: concatenar manualmente
+                probs_arr = pnp.concatenate([pnp.reshape(pnp.array(p), (1, -1)) if len(pnp.array(p).shape) == 1 else pnp.array(p) for p in probs_list], axis=0)
         
+        # Convertir etiquetas a one-hot usando autograd arrays
+        # print(f"y_test: {y_test}")
+        labels_one_hot = to_one_hot(y_test)
+        # print(f"labels_one_hot: {labels_one_hot}")
+        labels_one_hot = pnp.array(labels_one_hot, dtype=pnp.float64)
+        
+        # Calcular cross entropy - debe devolver un escalar diferenciable
         try:
-            return cross_entropy(to_one_hot(y_test), probs_arr)
+            loss = cross_entropy(labels_one_hot, probs_arr)
+            # Asegurar que loss es un escalar de autograd
+            if not isinstance(loss, (pnp.ndarray, float, int)):
+                loss = pnp.array(loss)
+            return loss
         except Exception as e:
             warnings.warn(f"Failed in cross_entropy: {e}. Returning high loss.", UserWarning)
-            return np.array(1e6)
+            return pnp.array(1e6)
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -655,7 +738,7 @@ class QMLBiClase(QuantumBaseModel):
         
         for i in X:
             try:
-                pred = circuit_callable(test=i, params=params)
+                pred = circuit_callable(i, params)
                 pred = np.asarray(pred)
                 
                 # Handle different output shapes
@@ -752,7 +835,7 @@ class QMLBiClase(QuantumBaseModel):
         probas = []
         for i in X:
             try:
-                pred = circuit_callable(test=i, params=params)
+                pred = circuit_callable(i, params)
                 pred = np.asarray(pred)
                 
                 # Handle different output shapes

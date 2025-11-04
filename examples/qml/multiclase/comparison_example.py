@@ -131,7 +131,7 @@ def main():
     # Comparar rendimiento con diferentes números de clases
     print("\n📊 Análisis de Rendimiento por Número de Clases:")
     
-    for n_classes in [2, 3, 4, 5]:
+    for n_classes in [2, 3, 4]:
         print(f"\n🔢 {n_classes} clases:")
         
         # Generar datos
@@ -173,6 +173,48 @@ def main():
         
         print(f"  Total de qubits: {n_totales_temp}")
     
+    n_classes = 5
+    print(f"\n🔢 {n_classes} clases:")
+        
+        # Generar datos
+    X_temp, y_temp = make_classification(
+        n_samples=80,
+        n_features=4,
+        n_informative=3,
+        n_redundant=1,
+        n_classes=n_classes,
+        n_clusters_per_class=1,
+        random_state=42
+    )
+        
+    X_train_temp, X_test_temp, y_train_temp, y_test_temp = train_test_split(
+        X_temp, y_temp, test_size=0.3, random_state=42, stratify=y_temp
+    )
+        
+        # Entrenar modelo multiclase
+    model_temp = QMLMultiClase(
+        codigo="gray",
+        epochs=10,
+        lr=0.1,
+        random_state=42,
+        verbose=False
+    )
+        
+    model_temp.fit(X_train_temp, y_train_temp)
+    y_pred_temp = model_temp.predict(X_test_temp)
+    accuracy_temp = accuracy_score(y_test_temp, y_pred_temp)
+    
+    print(f"  Accuracy: {accuracy_temp:.4f}")
+    print(f"  Loss: {model_temp.best_loss_:.6f}")
+        
+    # Calcular parámetros de circuito
+    m_temp, qubits_dato_temp = X_train_temp.shape
+    qubits_qram_temp = int(np.ceil(np.log2(m_temp)))
+    qubits_label_temp = int(np.ceil(np.log2(n_classes)))
+    n_totales_temp = qubits_qram_temp + qubits_dato_temp + qubits_label_temp + 1
+        
+    print(f"  Total de qubits: {n_totales_temp}")
+
     # Demostrar diferencias en predicciones de probabilidad
     print("\n🎲 Comparación de Predicciones de Probabilidad:")
     

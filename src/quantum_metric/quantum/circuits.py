@@ -1,7 +1,7 @@
 import pennylane as qml
 import numpy as np
 from qiskit_aer.noise import NoiseModel
-from .distances import mba_distance, distance
+from .distances import mba_distance, distance, weight_params
 
 def make_device(n_wires: int, backend=None, shots: int = 1024, noise_model=None, sample_mode: bool = False):
     """
@@ -30,6 +30,7 @@ def make_device(n_wires: int, backend=None, shots: int = 1024, noise_model=None,
     return qml.device("default.qubit", wires=n_wires)
 
 def build_biclase_qnode(train, y_train, n_totales, qubits_qram, qubits_dato, device, codigo="gray", noise=0.0, result="probs"):
+    
     @qml.qnode(device, interface="autograd")
     def circuit(test, params):
         # print(f"params: {params}")
@@ -39,7 +40,7 @@ def build_biclase_qnode(train, y_train, n_totales, qubits_qram, qubits_dato, dev
         mba_distance(train, test, labels = y_train, codigo=codigo, noise=noise)
         # print(f"test: {test}")
         if params is not None:
-            distance(qubits_qram, params)
+            weight_params(qubits_qram, params)
             # print(f"distance: {qubits_qram}")
 
         for i in range(qubits_dato):
@@ -68,7 +69,6 @@ def build_biclase_qnode(train, y_train, n_totales, qubits_qram, qubits_dato, dev
 def build_multiclase_qnode(train, y_train, n_totales, qubits_qram, qubits_dato, qubits_label, device, codigo="gray", noise=0.0, result="probs"):
     @qml.qnode(device, interface="autograd")
     def circuit(test, params):
-        # print(f"params: {params}")
         # print(f"n_totales: {n_totales}")
         # print(f"qubits_qram: {qubits_qram}")
         # print(f"qubits_dato: {qubits_dato}")
@@ -76,7 +76,7 @@ def build_multiclase_qnode(train, y_train, n_totales, qubits_qram, qubits_dato, 
         mba_distance(train, test, tipo="multiclase", labels=y_train, codigo=codigo, noise=noise)
         # print(f"test: {test}")
         if params is not None:
-            distance(qubits_qram, params)
+            weight_params(qubits_qram, params)
             # print(f"distance: {qubits_qram}")
 
         for i in range(qubits_dato):

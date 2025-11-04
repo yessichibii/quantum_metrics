@@ -1,4 +1,5 @@
 import pennylane as qml
+from pennylane import numpy as pnp
 from qiskit_aer.noise import NoiseModel
 import numpy as np
 from .initialize import qram_initialize, encode_data
@@ -151,15 +152,48 @@ def distance(qubits_qram, test, noise=0.0):
     ----------
     qubits_qram : int
         Número de qubits de dirección.
-    test : np.ndarray
-        Vector de entrada de prueba, con valores en [0, 1].
+    test : np.ndarray or autograd array
+        Vector de entrada de prueba, con valores en [0, 1] o parámetros entrenables.
+        Puede ser un array de numpy regular o un array de autograd para diferenciación.
     noise : float, opcional
         Intensidad del canal de ruido (0.0 desactiva el ruido).
     """
+
     for j, val in enumerate(test):
         # Escalamos valor [0,1] a ángulo [0,π]
+        # CRÍTICO: Usar anp.pi en lugar de np.pi para mantener diferenciación
+        # cuando val es un array de autograd
         theta = -1 * val * np.pi
         # Aplicamos RY inverso en los qubits de dato
+        # qml.RY con interface="autograd" debería manejar arrays de autograd automáticamente
+        qml.RY(theta, wires=qubits_qram + j)
+        if noise > 0:
+            qml.DepolarizingChannel(noise, wires = qubits_qram + j)
+
+
+
+def weight_params(qubits_qram, params, noise=0.0):
+    """
+    Aplica la codificación inversa (distancia cuántica) sobre los qubits de datos.
+
+    Parámetros
+    ----------
+    qubits_qram : int
+        Número de qubits de dirección.
+    test : np.ndarray or autograd array
+        Vector de entrada de prueba, con valores en [0, 1] o parámetros entrenables.
+        Puede ser un array de numpy regular o un array de autograd para diferenciación.
+    noise : float, opcional
+        Intensidad del canal de ruido (0.0 desactiva el ruido).
+    """
+    for j, val in enumerate(params):
+        # Escalamos valor [0,1] a ángulo [0,π]
+        # CRÍTICO: Usar anp.pi en lugar de np.pi para mantener diferenciación
+        # cuando val es un array de autograd
+        theta = val * pnp.pi
+        # Aplicamos RY inverso en los qubits de dato
+        # qml.RY con interface="autograd" debería manejar arrays de autograd automáticamente
+        print(f"theta: {theta} - qubits_qram + j: {qubits_qram + j}")
         qml.RY(theta, wires=qubits_qram + j)
         if noise > 0:
             qml.DepolarizingChannel(noise, wires = qubits_qram + j)
