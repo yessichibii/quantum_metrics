@@ -1,0 +1,134 @@
+Metadata-Version: 2.4
+Name: quantum_information
+Version: 0.1.0
+Summary: A library for quantum machine learning algorithms
+Author-email: Areli Yesareth Guerrero Estrada <ayge.1904@gmail.com>
+License: MIT
+Project-URL: Homepage, https://github.com/yessichibii/quantum_information
+Project-URL: Bug Tracker, https://github.com/yessichibii/quantum_information/issues
+Project-URL: Documentation, https://quantum_information.readthedocs.io/
+Project-URL: Repository, https://github.com/yessichibii/quantum_information.git
+Keywords: quantum,machine learning,scikit-learn,quantum computing
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Classifier: Topic :: Scientific/Engineering :: Physics
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: numpy>=1.19.0
+Requires-Dist: scipy>=1.7.0
+Requires-Dist: scikit-learn>=1.0.0
+Requires-Dist: pennylane>=0.28.0
+Requires-Dist: qiskit>=0.40.0
+Requires-Dist: qiskit-aer>=0.11.0
+Requires-Dist: autograd>=1.4.0
+Requires-Dist: pandas>=1.3.0
+Provides-Extra: dev
+Requires-Dist: pytest>=6.0; extra == "dev"
+Requires-Dist: pytest-cov>=2.10; extra == "dev"
+Requires-Dist: black>=21.0; extra == "dev"
+Requires-Dist: flake8>=3.8; extra == "dev"
+Requires-Dist: mypy>=0.910; extra == "dev"
+Requires-Dist: sphinx>=4.0; extra == "dev"
+Requires-Dist: sphinx-rtd-theme>=0.5; extra == "dev"
+Provides-Extra: docs
+Requires-Dist: sphinx>=4.0; extra == "docs"
+Requires-Dist: sphinx-rtd-theme>=0.5; extra == "docs"
+Requires-Dist: nbsphinx>=0.8; extra == "docs"
+Dynamic: license-file
+
+# Quantum Metrics
+
+**Quantum Metrics** es una librería en Python para calcular métricas cuánticas de distancia  utilizando QRAM con PennyLane, se puede emplear un esquema hibrido obteniendo el resultado de la distancia o agregarlo como una subrutina.
+
+# 🚀 Instalación de la biblioteca
+La forma más sencilla es instalar desde PyPI:
+
+```bash
+pip install quantum-metrics
+```
+
+# 📦 Dependencias
+
+La librería depende de:
+Python >= 3.8
+NumPy
+SciPy
+PennyLane
+Qiskit
+qiskit_aer
+
+
+Se instalarán automáticamente con pip install -e ., pero también puedes instalarlas manualmente:
+
+pip install numpy scipy pennylane
+
+# ⚡ Uso básico
+
+Puedes importar las funciones directamente desde el paquete:
+
+import numpy as np
+from quantum_metrics import trace_distance, fidelity, h_amplitude_distance
+
+# Ejemplo 1: Distancia traza y fidelidad entre dos matrices densidad
+rho = np.array([[1, 0], [0, 0]], dtype=complex)   # |0⟩
+sigma = np.array([[0.5, 0.5], [0.5, 0.5]], dtype=complex)  # |+⟩
+
+print("Distancia traza:", trace_distance(rho, sigma))
+print("Fidelidad:", fidelity(rho, sigma))
+
+# Ejemplo 2: Distancia híbrida con QRAM
+dataset = np.array([[0.0], [1.0]])  # Datos de entrenamiento
+test = [0.5]                        # Vector de prueba
+
+state = h_amplitude_distance(dataset, test)
+print("Estado cuántico resultante:", state)
+print("Norma del estado:", np.sum(np.abs(state)**2))
+
+# 📂 Estructura del proyecto
+quantum-metrics/
+│
+├── src/
+│   └── quantum_metrics/
+│       ├── __init__.py
+│       ├── distances.py
+│       ├── initialize.py
+│       └── utils.py
+│
+├── examples/
+│   └── demo.py
+│   └── qml/
+│       ├── modelo_biclase.py
+│       ├── modelo_asociativo.py
+│       └── modelo_multilabel.py
+│
+├── tests/
+│   └── test_distances.py
+│
+├── pyproject.toml
+├── README.md
+├── LICENSE
+
+# 🧪 Pruebas
+
+Ejecuta los tests con pytest:
+
+pytest
+
+# 📬 Contribuciones
+
+¡Las contribuciones son bienvenidas!
+
+https://github.com/yessichibii/quantum_metrics
+
+Por favor abre un issue o un pull request en GitHub
+
+

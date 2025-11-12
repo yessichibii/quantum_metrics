@@ -1,19 +1,121 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "quantum-metrics"
+name = "quantum_information"
 version = "0.1.0"
-description = "Librería para métricas cuánticas de distancia"
+description = "A library for quantum machine learning algorithms"
 authors = [
     { name="Areli Yesareth Guerrero Estrada", email="ayge.1904@gmail.com" }
 ]
 license = { text="MIT" }
 readme = "README.md"
 requires-python = ">=3.8"
-dependencies = ["numpy", "scipy", "pennylane"]
+keywords = ["quantum", "machine learning", "scikit-learn", "quantum computing"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+dependencies = [
+    "numpy>=1.19.0",
+    "scipy>=1.7.0",
+    "scikit-learn>=1.0.0",
+    "pennylane>=0.28.0",
+    "qiskit>=0.40.0",
+    "qiskit-aer>=0.11.0",
+    "autograd>=1.4.0",
+    "pandas>=1.3.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0",
+    "pytest-cov>=2.10",
+    "black>=21.0",
+    "flake8>=3.8",
+    "mypy>=0.910",
+    "sphinx>=4.0",
+    "sphinx-rtd-theme>=0.5"
+]
+docs = [
+    "sphinx>=4.0",
+    "sphinx-rtd-theme>=0.5",
+    "nbsphinx>=0.8"
+]
 
 [project.urls]
-Homepage = "https://github.com/yessichibii/quantum_metrics"
-"Bug Tracker" = "https://github.com/yessichibii/quantum-metrics/issues"
+Homepage = "https://github.com/yessichibii/quantum_information"
+"Bug Tracker" = "https://github.com/yessichibii/quantum_information/issues"
+Documentation = "https://quantum_information.readthedocs.io/"
+Repository = "https://github.com/yessichibii/quantum_information.git"
+
+# [project.scripts]
+# quantum_information = "quantum_metric.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"quantum_information" = ["*.py", "*.md", "*.txt"]
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--cov=quantum_information",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-report=xml"
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests"
+]
