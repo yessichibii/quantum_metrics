@@ -108,7 +108,7 @@ def build_asociative_qnode(train, y_train, n_totales, qubits_qram, qubits_dato, 
         # print(f"n_totales: {n_totales}")
         # print(f"qubits_qram: {qubits_qram}")
         # print(f"qubits_dato: {qubits_dato}")
-        mba_distance(train, test, labels = y_train, codigo=codigo, noise=noise)
+        mba_distance(train, test, labels = y_train, codigo="diag", noise=noise)
         # print(f"test: {test}")
         if params is not None:
             weight_params(qubits_qram, params)
