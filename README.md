@@ -1,12 +1,16 @@
-# Quantum Metrics
+# Quantum Information
 
-**Quantum Metrics** es una librería en Python para calcular métricas cuánticas de distancia  utilizando QRAM con PennyLane, se puede emplear un esquema hibrido obteniendo el resultado de la distancia o agregarlo como una subrutina.
+**Quantum Information** es una librería en Python para aplicar algoritmos cuánticos para las tareas de aprendizaje automático como:
+Clasificación con modelos basados en métricas
+Calculos de distancia
+Inicialización de datos empleando QRAM, amplitud y angulo
+Algoritmos hibridos
 
 # 🚀 Instalación de la biblioteca
 La forma más sencilla es instalar desde PyPI:
 
 ```bash
-pip install quantum-metrics
+pip install quantum-information
 ```
 
 # 📦 Dependencias
@@ -100,28 +104,45 @@ Los modelos cuánticos soportan pesos personalizados y control de optimización:
 - Salida: probabilidades para múltiples clases
 
 # 📂 Estructura del proyecto
-quantum-metrics/
-│
-├── src/
-│   └── quantum_metrics/
+src/quantum_information/
+├── __init__.py                 # Punto de entrada del nuevo paquete
+├── circuits/                   # Construcción genérica de circuitos
+│   ├── __init__.py
+│   └── circuits.py
+├── encoding/                   # Codificación de datos a estados cuánticos
+│   ├── __init__.py
+│   ├── qram.py
+│   ├── advanced/
+│   │   ├── __init__.py
+│   │   ├── BasisEncoding.py
+│   │   ├── DataEncoding.py
+│   │   └── QRAM.py
+│   └── deprecated/             # Implementaciones heredadas (comentadas como deprecated)
 │       ├── __init__.py
-│       ├── distances.py
-│       ├── initialize.py
-│       └── utils.py
-│
-├── examples/
-│   └── demo.py
-│   └── qml/
-│       ├── modelo_biclase.py
-│       ├── modelo_asociativo.py
-│       └── modelo_multilabel.py
-│
-├── tests/
-│   └── test_distances.py
-│
-├── pyproject.toml
-├── README.md
-├── LICENSE
+│       ├── data_encoding.py
+│       ├── performance.py
+│       ├── QFT_arithmetic.py
+│       └── visualization.py
+├── metrics/                    # Métricas y modelos basados en distancias
+│   ├── __init__.py
+│   ├── base.py
+│   ├── distances.py
+│   ├── models/
+│   │   ├── __init__.py
+│   │   ├── parametricos.py
+│   │   ├── qml.py
+│   │   ├── qml_biclase.py
+│   │   └── qml_multiclase.py
+│   └── validation/
+│       ├── __init__.py
+│       └── cross_validation.py
+├── preprocessing/              # Pipelines clásicos antes de codificar
+│   ├── __init__.py
+│   └── data.py
+└── utils/                      # Utilidades transversales
+    ├── __init__.py
+    ├── params.py
+    └── utils.py
 
 # 🧪 Pruebas
 
@@ -133,7 +154,7 @@ pytest
 
 ¡Las contribuciones son bienvenidas!
 
-https://github.com/yessichibii/quantum_metrics
+https://github.com/yessichibii/quantum_information
 
 Por favor abre un issue o un pull request en GitHub
 

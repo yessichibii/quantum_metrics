@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
-from quantum_metrics import state_mba_distance
+
+from quantum_information.metrics.distances import state_mba_distance
 
 
 def test_state_mba_distance_type():

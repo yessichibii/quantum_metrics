@@ -66,7 +66,7 @@ Repository = "https://github.com/yessichibii/quantum_information.git"
 where = ["src"]
 
 [tool.setuptools.package-data]
-"quantum_metric" = ["*.py", "*.md", "*.txt"]
+"quantum_information" = ["*.py", "*.md", "*.txt"]
 
 [tool.black]
 line-length = 88
@@ -109,7 +109,7 @@ python_functions = ["test_*"]
 addopts = [
     "--strict-markers",
     "--strict-config",
-    "--cov=quantum_metric",
+    "--cov=quantum_information",
     "--cov-report=term-missing",
     "--cov-report=html",
     "--cov-report=xml"

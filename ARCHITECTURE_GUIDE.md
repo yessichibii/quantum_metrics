@@ -33,19 +33,45 @@
 ## 📚 **Estructura de Archivos**
 
 ```
-src/quantum_metric/
-├── __init__.py              # Exports principales
-├── base.py                  # Clase base compatible con sklearn
-├── models/
+src/quantum_information/
+├── __init__.py                 # Punto de entrada del nuevo paquete
+├── circuits/                   # Construcción genérica de circuitos
 │   ├── __init__.py
-│   └── qml_biclase.py       # Clasificador binario mejorado
-├── utils/
-│   ├── validation.py        # Utilidades de validación
-│   ├── params.py
-│   └── preprocesamiento.py
-└── quantum/
-    ├── circuits.py
-    └── distances.py
+│   └── circuits.py
+├── encoding/                   # Codificación de datos a estados cuánticos
+│   ├── __init__.py
+│   ├── qram.py
+│   ├── advanced/
+│   │   ├── __init__.py
+│   │   ├── BasisEncoding.py
+│   │   ├── DataEncoding.py
+│   │   └── QRAM.py
+│   └── deprecated/             # Implementaciones heredadas (comentadas como deprecated)
+│       ├── __init__.py
+│       ├── data_encoding.py
+│       ├── performance.py
+│       ├── QFT_arithmetic.py
+│       └── visualization.py
+├── metrics/                    # Métricas y modelos basados en distancias
+│   ├── __init__.py
+│   ├── base.py
+│   ├── distances.py
+│   ├── models/
+│   │   ├── __init__.py
+│   │   ├── parametricos.py
+│   │   ├── qml.py
+│   │   ├── qml_biclase.py
+│   │   └── qml_multiclase.py
+│   └── validation/
+│       ├── __init__.py
+│       └── cross_validation.py
+├── preprocessing/              # Pipelines clásicos antes de codificar
+│   ├── __init__.py
+│   └── data.py
+└── utils/                      # Utilidades transversales
+    ├── __init__.py
+    ├── params.py
+    └── utils.py
 ```
 
 ## 🚀 **Recomendaciones Adicionales**
@@ -56,7 +82,7 @@ src/quantum_metric/
 pip install -e ".[dev]"
 
 # Ejecutar tests
-pytest tests/ -v --cov=quantum_metric
+pytest tests/ -v --cov=quantum_information
 ```
 
 ### **2. Documentación**
@@ -81,7 +107,7 @@ jobs:
       - name: Install dependencies
         run: pip install -e ".[dev]"
       - name: Run tests
-        run: pytest tests/ -v --cov=quantum_metric
+        run: pytest tests/ -v --cov=quantum_information
 ```
 
 ## 🔍 **Validaciones Implementadas**
